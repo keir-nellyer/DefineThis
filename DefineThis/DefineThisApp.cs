@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
@@ -41,14 +42,22 @@ namespace DefineThis
                         logError(e);
                         continue;
                     }
-                    catch (Exception e)
+                    catch (ApiResponseException e)
                     {
                         logError(e);
                         continue;
                     }
 
-                    printArray(definitions);
-                    Console.WriteLine();
+                    if (definitions != null)
+                    {
+                        printArray(definitions);
+                        Console.WriteLine();
+                    }
+                    else
+                    {
+                        Console.WriteLine("Couldn't find a definition for that word.");
+                        Console.WriteLine();
+                    }
                 }
                 else
                 {
@@ -72,12 +81,24 @@ namespace DefineThis
         private static async Task<string[]> getDefinitionAsync(string word)
         {
             var wordId = word.ToLower();
-            var jsonResponse = await httpClient.GetStringAsync($"{API_BASE_URL}/entries/{LANGUAGE}/{wordId}");
+            var response = await httpClient.GetAsync($"{API_BASE_URL}/entries/{LANGUAGE}/{wordId}");
 
-            var response = JObject.Parse(jsonResponse);
-            var definitionsJson = (JArray)response["results"][0]["lexicalEntries"][0]["entries"][0]["senses"][0]["definitions"];
-            var definitions = definitionsJson.ToObject<string[]>();
-            return definitions;
+            if (response.IsSuccessStatusCode)
+            {
+                var data = JObject.Parse(await response.Content.ReadAsStringAsync());
+                var definitionsJson = (JArray)data["results"][0]["lexicalEntries"][0]["entries"][0]["senses"][0]["definitions"];
+                var definitions = definitionsJson.ToObject<string[]>();
+                return definitions;
+            }
+            else
+            {
+                // any other than 404 not found isn't expected
+                if (response.StatusCode != HttpStatusCode.NotFound)
+                {
+                    throw new ApiResponseException($"Request wasn't successful: {response.StatusCode} - {response.ReasonPhrase}");
+                }
+                return null;
+            }
         }
 
         private static void printArray(string[] arr)
