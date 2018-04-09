@@ -78,7 +78,7 @@ namespace DefineThis
 
         private static bool isInputValid(string input)
         {
-            return !input.Contains(" ");
+            return !string.IsNullOrWhiteSpace(input) && !input.Contains(" ");
         }
 
         private static string askForInput()
