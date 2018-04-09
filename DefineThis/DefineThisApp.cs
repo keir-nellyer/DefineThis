@@ -35,16 +35,25 @@ namespace DefineThis
 
                     try
                     {
-                        definitions = getDefinitionAsync(input).Result;
+                        var task = getDefinitionAsync(input);
+                        definitions = task.Result;
                     }
-                    catch (HttpRequestException e)
+                    catch (AggregateException ae)
                     {
-                        logError(e);
-                        continue;
-                    }
-                    catch (ApiResponseException e)
-                    {
-                        logError(e);
+                        ae.Handle(e =>
+                        {
+                            if (e is ApiResponseException)
+                            {
+                                logError(e);
+                                return true;
+                            }
+                            else if (e is HttpRequestException)
+                            {
+                                logError(e);
+                                return true;
+                            }
+                            return false;
+                        });
                         continue;
                     }
 
@@ -113,6 +122,7 @@ namespace DefineThis
         {
             Console.WriteLine("An error occurred: " + e.Message);
             Console.WriteLine(e);
+            Console.WriteLine();
         }
     }
 }
