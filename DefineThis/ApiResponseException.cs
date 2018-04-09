@@ -3,6 +3,9 @@ using System.Runtime.Serialization;
 
 namespace DefineThis
 {
+    /// <summary>
+    /// An exception which is thrown when the Dictionary API returns an unexpected response code.
+    /// </summary>
     public class ApiResponseException : Exception
     {
         public ApiResponseException() : base()

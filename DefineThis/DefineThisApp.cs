@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -6,6 +7,9 @@ using Newtonsoft.Json.Linq;
 
 namespace DefineThis
 {
+    /// <summary>
+    /// An application which takes in a word from the console and returns the definition.
+    /// </summary>
     public class DefineThisApp
     {
         private const string API_BASE_URL = "https://od-api.oxforddictionaries.com/api/v1";
@@ -17,12 +21,19 @@ namespace DefineThis
 
         private static HttpClient httpClient = new HttpClient();
 
+        /// <summary>
+        /// Initializes the <see cref="T:DefineThis.DefineThisApp"/> class.
+        /// </summary>
         static DefineThisApp()
         {
             httpClient.DefaultRequestHeaders.Add("app_id", APP_ID);
             httpClient.DefaultRequestHeaders.Add("app_key", APP_KEY);
         }
 
+        /// <summary>
+        /// The entry point of the program, where the program control starts and ends.
+        /// </summary>
+        /// <param name="args">The command-line arguments.</param>
         public static void Main(string[] args)
         {
             while (true)
@@ -44,12 +55,12 @@ namespace DefineThis
                         {
                             if (e is ApiResponseException)
                             {
-                                logError(e);
+                                logException(e);
                                 return true;
                             }
                             else if (e is HttpRequestException)
                             {
-                                logError(e);
+                                logException(e);
                                 return true;
                             }
                             return false;
@@ -76,17 +87,31 @@ namespace DefineThis
             }
         }
 
+        /// <summary>
+        /// Checks if the input is valid.
+        /// </summary>
+        /// <returns><c>true</c>, if input was valid, <c>false</c> otherwise.</returns>
+        /// <param name="input">The input.</param>
         private static bool isInputValid(string input)
         {
             return !string.IsNullOrWhiteSpace(input) && !input.Contains(" ");
         }
 
+        /// <summary>
+        /// Asks for input.
+        /// </summary>
+        /// <returns>The input.</returns>
         private static string askForInput()
         {
             Console.WriteLine("Please enter a word:");
             return Console.ReadLine();
         }
 
+        /// <summary>
+        /// Gets the definition of a word async.
+        /// </summary>
+        /// <returns>The definition async.</returns>
+        /// <param name="word">The word.</param>
         private static async Task<string[]> getDefinitionAsync(string word)
         {
             var wordId = word.ToLower();
@@ -94,14 +119,18 @@ namespace DefineThis
 
             if (response.IsSuccessStatusCode)
             {
-                var data = JObject.Parse(await response.Content.ReadAsStringAsync());
-                var definitionsJson = (JArray)data["results"][0]["lexicalEntries"][0]["entries"][0]["senses"][0]["definitions"];
-                var definitions = definitionsJson.ToObject<string[]>();
+                var json = await response.Content.ReadAsStringAsync();
+                var data = JObject.Parse(json);
+                // get all the definitions
+                var definitionsJson = ((JArray)data["results"][0]["lexicalEntries"][0]["entries"])
+                    .Select(entry => entry["senses"])
+                    .SelectMany(senses => senses.Select(sense => sense["definitions"]));
+                var definitions = definitionsJson.SelectMany(d => d.ToObject<string[]>()).ToArray();
                 return definitions;
             }
             else
             {
-                // any other than 404 not found isn't expected
+                // any status code other than 404 not found isn't expected
                 if (response.StatusCode != HttpStatusCode.NotFound)
                 {
                     throw new ApiResponseException($"Request wasn't successful: {response.StatusCode} - {response.ReasonPhrase}");
@@ -110,6 +139,10 @@ namespace DefineThis
             }
         }
 
+        /// <summary>
+        /// Prints the array.
+        /// </summary>
+        /// <param name="arr">The array.</param>
         private static void printArray(string[] arr)
         {
             for (var i = 0; i < arr.Length; i++)
@@ -118,7 +151,11 @@ namespace DefineThis
             }
         }
 
-        private static void logError(Exception e)
+        /// <summary>
+        /// Logs an exception.
+        /// </summary>
+        /// <param name="e">The exception.</param>
+        private static void logException(Exception e)
         {
             Console.WriteLine("An error occurred: " + e.Message);
             Console.WriteLine(e);
