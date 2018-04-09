@@ -140,7 +140,7 @@ namespace DefineThis
         }
 
         /// <summary>
-        /// Prints the array.
+        /// Prints an array.
         /// </summary>
         /// <param name="arr">The array.</param>
         private static void printArray(string[] arr)
