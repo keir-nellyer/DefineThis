@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.Serialization;
 
-namespace DefineThis
+namespace DefineThis.Exceptions
 {
     /// <summary>
     /// An exception which is thrown when the Dictionary API returns an unexpected response code.
