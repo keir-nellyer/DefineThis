@@ -16,6 +16,9 @@ namespace DefineThis
             start.Go();
         }
 
+        /// <summary>
+        /// Starts up the application.
+        /// </summary>
         public void Go()
         {
             var serviceProvider = SetupContainer();
@@ -23,6 +26,10 @@ namespace DefineThis
             app.Start();
         }
         
+        /// <summary>
+        /// Sets up the dependency injection container.
+        /// </summary>
+        /// <returns>the service provider</returns>
         private IServiceProvider SetupContainer()
         {
             var serviceCollection = new ServiceCollection();

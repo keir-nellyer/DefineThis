@@ -7,6 +7,9 @@ using Newtonsoft.Json.Linq;
 
 namespace DefineThis.Definitions
 {
+    /// <summary>
+    /// An implementation of <see cref="IDefiner"/> which makes use of the Oxford Dictionaries API.
+    /// </summary>
     public class OxfordDictionaryDefiner : IDefiner
     {
         private const string API_BASE_URL = "https://od-api.oxforddictionaries.com/api/v1";
@@ -35,27 +38,26 @@ namespace DefineThis.Definitions
             var phraseLower = phrase.ToLower();
             var response = httpClient.GetAsync($"{API_BASE_URL}/entries/{LANGUAGE}/{phraseLower}").Result;
 
-            if (response.IsSuccessStatusCode)
-            {
-                var json = response.Content.ReadAsStringAsync().Result;
-                var data = JObject.Parse(json);
-                // get all the definitions
-                var definitionsJson = ((JArray)data["results"][0]["lexicalEntries"][0]["entries"])
-                    .Select(entry => entry["senses"])
-                    .SelectMany(senses => senses.Select(sense => sense["definitions"]));
-                var definitions = definitionsJson.SelectMany(d => d.ToObject<string[]>()).ToList();
-                return definitions;
-            }
-            else
+            if (!response.IsSuccessStatusCode)
             {
                 // any status code other than 404 not found isn't expected
                 if (response.StatusCode != HttpStatusCode.NotFound)
                 {
-                    throw new ApiResponseException($"Request wasn't successful: {response.StatusCode} - {response.ReasonPhrase}");
+                    throw new ApiResponseException(
+                        $"Request wasn't successful: {response.StatusCode} - {response.ReasonPhrase}");
                 }
-                
+
                 return Enumerable.Empty<string>();
             }
+            
+            var json = response.Content.ReadAsStringAsync().Result;
+            var data = JObject.Parse(json);
+            // get all the definitions
+            var definitionsJson = ((JArray) data["results"][0]["lexicalEntries"][0]["entries"])
+                .Select(entry => entry["senses"])
+                .SelectMany(senses => senses.Select(sense => sense["definitions"]));
+            var definitions = definitionsJson.SelectMany(d => d.ToObject<string[]>()).ToList();
+            return definitions;
         }
     }
 }
