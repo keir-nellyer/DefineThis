@@ -12,6 +12,7 @@ namespace DefineThis.Definitions
     /// </summary>
     public class OxfordDictionaryDefiner : IDefiner
     {
+        // TODO: API v1 is being deprecated, migrate to v2
         private const string API_BASE_URL = "https://od-api.oxforddictionaries.com/api/v1";
         private const string LANGUAGE = "en";
         private const string REGION = "GB";
