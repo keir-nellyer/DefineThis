@@ -1,6 +1,11 @@
 using System;
+using DefineThis.Audit;
+using DefineThis.Configuration;
 using DefineThis.Definitions;
+using DefineThis.Persistence;
+using DefineThis.Serialization;
 using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json;
 
 namespace DefineThis
 {
@@ -35,6 +40,17 @@ namespace DefineThis
             var serviceCollection = new ServiceCollection();
 
             serviceCollection.AddTransient<IDefiner, OxfordDictionaryDefiner>();
+            serviceCollection.AddTransient<IHistoryReader, HistoryReader>();
+            serviceCollection.AddTransient<IHistoryWriter, HistoryWriter>();
+            serviceCollection.AddTransient<IHistoryRecorder, HistoryRecorder>();
+            serviceCollection.AddTransient<IDateTimeProvider, DateTimeProvider>();
+            serviceCollection.AddTransient<HistoryConfiguration>();
+            serviceCollection.AddTransient<IJsonSerializerFactory, JsonSerializerFactory>();
+            serviceCollection.AddTransient<JsonSerializer>(provider =>
+            {
+                var factory = provider.GetService<IJsonSerializerFactory>();
+                return factory.Create();
+            });
             
             return serviceCollection.BuildServiceProvider();
         }

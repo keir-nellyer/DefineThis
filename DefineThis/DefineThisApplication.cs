@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using DefineThis.Audit;
 using DefineThis.Definitions;
 
 namespace DefineThis
@@ -10,11 +11,13 @@ namespace DefineThis
     /// </summary>
     public class DefineThisApplication
     {
-        private IDefiner definer;
+        private IDefiner _definer;
+        private IHistoryRecorder _historyRecorder;
 
-        public DefineThisApplication(IDefiner definer)
+        public DefineThisApplication(IDefiner definer, IHistoryRecorder historyRecorder)
         {
-            this.definer = definer;
+            _definer = definer;
+            _historyRecorder = historyRecorder;
         }
 
         public void Start()
@@ -32,10 +35,12 @@ namespace DefineThis
 
                 Console.WriteLine("Fetching definition...");
                 
+                _historyRecorder.Record(input);
+                
                 List<string> definitions;
                 try
                 {
-                    definitions = this.definer.GetDefinitions(input).ToList();
+                    definitions = this._definer.GetDefinitions(input).ToList();
                 }
                 catch (AggregateException ae)
                 {
